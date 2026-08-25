@@ -1,0 +1,33 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export function middleware(request: NextRequest) {
+  const authCookie = request.cookies.get('crm_auth');
+  const isAuthenticated = authCookie?.value === 'authenticated';
+  
+  const isLoginPage = request.nextUrl.pathname === '/login';
+  const isAuthApi = request.nextUrl.pathname === '/api/auth';
+  
+  // Exclude static files and next internals
+  if (
+    request.nextUrl.pathname.startsWith('/_next') ||
+    request.nextUrl.pathname.startsWith('/static') ||
+    request.nextUrl.pathname.includes('.')
+  ) {
+    return NextResponse.next();
+  }
+
+  if (!isAuthenticated && !isLoginPage && !isAuthApi) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  if (isAuthenticated && isLoginPage) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+};
