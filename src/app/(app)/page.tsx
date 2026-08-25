@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Lead } from '@/types';
 import { Users, PhoneCall, MessageSquare, Flame, DollarSign } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line } from 'recharts';
-import { format, isPast, isToday, isTomorrow, isThisWeek, parseISO } from 'date-fns';
+import { format, isPast, isToday, isTomorrow, isThisWeek, parseISO, isValid } from 'date-fns';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
 
@@ -134,7 +134,8 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {followUpLeads.map(lead => {
                   const date = parseISO(lead.follow_up_date!);
-                  const isOverdue = isPast(date) && !isToday(date);
+                  const validDate = isValid(date);
+                  const isOverdue = validDate && isPast(date) && !isToday(date);
                   return (
                     <Link key={lead.phone} href={`/leads/${lead.phone}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
                       <div className="overflow-hidden">
@@ -142,8 +143,8 @@ export default function DashboardPage() {
                         <p className="text-xs text-gray-500 truncate">{lead.follow_up_reason || 'Follow up'}</p>
                       </div>
                       <div className="text-right whitespace-nowrap ml-2">
-                        <Badge variant={isOverdue ? 'danger' : (isToday(date) ? 'warning' : 'default')}>
-                          {isOverdue ? 'Overdue' : (isToday(date) ? 'Today' : format(date, 'MMM d'))}
+                        <Badge variant={isOverdue ? 'danger' : (validDate && isToday(date) ? 'warning' : 'default')}>
+                          {isOverdue ? 'Overdue' : (validDate ? (isToday(date) ? 'Today' : format(date, 'MMM d')) : 'Invalid date')}
                         </Badge>
                       </div>
                     </Link>

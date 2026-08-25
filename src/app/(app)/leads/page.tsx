@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Search, Filter, Phone, Clock, AlertCircle, Users } from 'lucide-react';
-import { formatDistanceToNow, parseISO } from 'date-fns';
+import { formatDistanceToNow, parseISO, isValid } from 'date-fns';
 
 export default function LeadsPage() {
   const [search, setSearch] = useState('');
@@ -149,7 +149,11 @@ export default function LeadsPage() {
                   )}
                   <div className="text-xs text-gray-400 flex items-center gap-1 whitespace-nowrap">
                     <Clock className="h-3 w-3" />
-                    {lead.last_message_at ? formatDistanceToNow(parseISO(lead.last_message_at), { addSuffix: true }) : 'No messages'}
+                    {(() => {
+                      if (!lead.last_message_at) return 'No messages';
+                      const date = parseISO(lead.last_message_at);
+                      return isValid(date) ? formatDistanceToNow(date, { addSuffix: true }) : 'Invalid date';
+                    })()}
                   </div>
                 </div>
               </CardContent>

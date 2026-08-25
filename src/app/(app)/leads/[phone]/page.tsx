@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { ArrowLeft, Send, PauseCircle, PlayCircle, Bot, User, UserCheck } from 'lucide-react';
 import Link from 'next/link';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 
 export default function LeadDetailPage({ params }: { params: Promise<{ phone: string }> }) {
   const unwrappedParams = use(params);
@@ -248,7 +248,11 @@ export default function LeadDetailPage({ params }: { params: Promise<{ phone: st
                 </div>
                 <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.message}</p>
                 <div className="text-[10px] text-right mt-1 opacity-60">
-                  {format(parseISO(msg.sent_at), 'h:mm a, MMM d')}
+                  {(() => {
+                    if (!msg.sent_at) return '—';
+                    const date = parseISO(msg.sent_at);
+                    return isValid(date) ? format(date, 'h:mm a, MMM d') : 'Invalid time';
+                  })()}
                 </div>
               </div>
             </div>
