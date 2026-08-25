@@ -34,9 +34,9 @@ export default function LeadsPage() {
     if (search) {
       const s = search.toLowerCase();
       result = result.filter(l => 
-        l.name?.toLowerCase().includes(s) || 
-        l.phone.includes(s) || 
-        l.location?.toLowerCase().includes(s)
+        (l.name || '').toLowerCase().includes(s) || 
+        (l.phone || '').includes(s) || 
+        (l.location || '').toLowerCase().includes(s)
       );
     }
 
@@ -50,11 +50,15 @@ export default function LeadsPage() {
 
     result.sort((a, b) => {
       if (sortBy === 'recent') {
-        return new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime();
+        const timeA = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+        const timeB = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+        return timeB - timeA;
       } else if (sortBy === 'score') {
         return (b.lead_score || 0) - (a.lead_score || 0);
       } else if (sortBy === 'oldest') {
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return timeA - timeB;
       }
       return 0;
     });
@@ -137,7 +141,7 @@ export default function LeadsPage() {
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-start md:justify-end">
-                  <Badge variant="outline" className="capitalize">{lead.lead_stage.replace('_', ' ')}</Badge>
+                  <Badge variant="outline" className="capitalize">{(lead.lead_stage || 'unknown').replace('_', ' ')}</Badge>
                   {lead.lead_score != null && (
                     <Badge variant={lead.lead_score >= 70 ? 'success' : (lead.lead_score >= 40 ? 'warning' : 'default')}>
                       Score: {lead.lead_score}
@@ -145,7 +149,7 @@ export default function LeadsPage() {
                   )}
                   <div className="text-xs text-gray-400 flex items-center gap-1 whitespace-nowrap">
                     <Clock className="h-3 w-3" />
-                    {formatDistanceToNow(parseISO(lead.last_message_at), { addSuffix: true })}
+                    {lead.last_message_at ? formatDistanceToNow(parseISO(lead.last_message_at), { addSuffix: true }) : 'No messages'}
                   </div>
                 </div>
               </CardContent>

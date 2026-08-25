@@ -33,24 +33,34 @@ export default function DashboardPage() {
   const now = new Date();
   const callbacksDue = leads.filter(l => {
     if (!l.follow_up_date) return false;
-    const date = parseISO(l.follow_up_date);
-    return isPast(date) || isToday(date) || isTomorrow(date);
+    try {
+      const date = parseISO(l.follow_up_date);
+      return isPast(date) || isToday(date) || isTomorrow(date);
+    } catch (e) {
+      return false;
+    }
   }).length;
 
   const liveChats = leads.filter(l => {
-    const lastMsg = parseISO(l.last_message_at);
-    return (now.getTime() - lastMsg.getTime()) < 15 * 60 * 1000; // 15 mins
+    if (!l.last_message_at) return false;
+    try {
+      const lastMsg = parseISO(l.last_message_at);
+      return (now.getTime() - lastMsg.getTime()) < 15 * 60 * 1000; // 15 mins
+    } catch (e) {
+      return false;
+    }
   }).length;
 
   const seriousLeads = leads.filter(l => l.lead_score && l.lead_score >= 70).length;
 
   const hotPipelineValue = leads
-    .filter(l => ['quoting', 'negotiation', 'site_visit'].includes(l.lead_stage))
+    .filter(l => l.lead_stage && ['quoting', 'negotiation', 'site_visit'].includes(l.lead_stage))
     .reduce((sum, l) => sum + (l.payment_total || 0), 0);
 
   // 2. Pipeline Breakdown Data
   const stageCounts = leads.reduce((acc, l) => {
-    acc[l.lead_stage] = (acc[l.lead_stage] || 0) + 1;
+    const stage = l.lead_stage || 'unknown';
+    acc[stage] = (acc[stage] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
@@ -67,7 +77,7 @@ export default function DashboardPage() {
   };
 
   const pipelineData = Object.entries(stageCounts)
-    .map(([name, value]) => ({ name: name.replace('_', ' ').toUpperCase(), value, originalName: name }))
+    .map(([name, value]) => ({ name: (name || 'unknown').replace('_', ' ').toUpperCase(), value, originalName: name }))
     .sort((a, b) => b.value - a.value);
 
   // 3. Follow-up triage

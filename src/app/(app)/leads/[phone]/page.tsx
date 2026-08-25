@@ -130,7 +130,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ phone: st
                 <div>
                   <label className="text-xs text-gray-500">Stage</label>
                   <Select 
-                    value={lead.lead_stage} 
+                    value={lead.lead_stage || 'new'} 
                     onChange={(e) => updateLeadMutation.mutate({ lead_stage: e.target.value as any })}
                   >
                     <option value="new">New</option>
