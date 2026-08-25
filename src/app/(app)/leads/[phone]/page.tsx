@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { ArrowLeft, Send, PauseCircle, PlayCircle, Bot, User, UserCheck } from 'lucide-react';
+import { ArrowLeft, Send, PauseCircle, PlayCircle, Bot, User, UserCheck, FileText, FileDown } from 'lucide-react';
 import Link from 'next/link';
 import { format, parseISO, isValid } from 'date-fns';
 
@@ -88,6 +88,58 @@ export default function LeadDetailPage({ params }: { params: Promise<{ phone: st
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
   });
+
+  const downloadMarkdown = () => {
+    if (!lead || !messagesData?.messages) return;
+    let md = `# Conversation with ${lead.name || lead.phone}\n\n`;
+    messagesData.messages.forEach(msg => {
+      const time = msg.sent_at && isValid(parseISO(msg.sent_at)) ? format(parseISO(msg.sent_at), 'MMM d, yyyy h:mm a') : 'Unknown time';
+      md += `**${msg.sender.toUpperCase()}** (${time}):\n${msg.message}\n\n`;
+    });
+    
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat_${lead.phone}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadPDF = async () => {
+    if (!lead || !messagesData?.messages) return;
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
+    
+    doc.setFontSize(16);
+    doc.text(`Conversation with ${lead.name || lead.phone}`, 10, 15);
+    
+    doc.setFontSize(10);
+    let y = 25;
+    
+    messagesData.messages.forEach(msg => {
+      const time = msg.sent_at && isValid(parseISO(msg.sent_at)) ? format(parseISO(msg.sent_at), 'MMM d, h:mm a') : 'Unknown time';
+      const header = `${msg.sender.toUpperCase()} (${time})`;
+      
+      doc.setFont("helvetica", "bold");
+      if (y > 280) { doc.addPage(); y = 15; }
+      doc.text(header, 10, y);
+      y += 5;
+      
+      doc.setFont("helvetica", "normal");
+      const lines = doc.splitTextToSize(msg.message, 180);
+      lines.forEach((line: string) => {
+        if (y > 280) { doc.addPage(); y = 15; }
+        doc.text(line, 10, y);
+        y += 5;
+      });
+      y += 3;
+    });
+    
+    doc.save(`chat_${lead.phone}.pdf`);
+  };
 
   if (!lead) return <div className="p-6 text-center">Loading lead details...</div>;
 
@@ -231,7 +283,15 @@ export default function LeadDetailPage({ params }: { params: Promise<{ phone: st
       <div className="w-full md:w-1/2 lg:w-7/12 flex flex-col bg-white border border-[var(--color-border)] md:rounded-2xl shadow-soft h-[600px] md:h-[calc(100vh-6rem)]">
         <div className="p-4 border-b bg-gray-50 md:rounded-t-2xl flex items-center justify-between">
           <h3 className="font-semibold flex items-center"><MessageSquare className="mr-2 h-4 w-4" /> Live Conversation</h3>
-          <Badge variant="outline">{lead.channel}</Badge>
+          <div className="flex items-center gap-3">
+            <button onClick={downloadMarkdown} title="Download Markdown" className="text-gray-500 hover:text-gray-900 transition-colors">
+              <FileText className="h-4 w-4" />
+            </button>
+            <button onClick={downloadPDF} title="Download PDF" className="text-gray-500 hover:text-gray-900 transition-colors">
+              <FileDown className="h-4 w-4" />
+            </button>
+            <Badge variant="outline">{lead.channel}</Badge>
+          </div>
         </div>
         
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
