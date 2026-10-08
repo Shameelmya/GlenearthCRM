@@ -14,7 +14,7 @@ export interface Lead {
   special_requirements?: string | null;
   plan_status?: string | null;
   budget?: string | null;
-  lead_stage: 'new' | 'requirement_gathering' | 'quoting' | 'objection_handling' | 'site_visit' | 'negotiation' | 'won' | 'lost' | 'nurture';
+  lead_stage: string;
   follow_up_date?: string | null;
   follow_up_reason?: string | null;
   ai_paused: boolean;
@@ -27,6 +27,22 @@ export interface Lead {
   payment_total?: number | null;
   payment_received?: number | null;
   staff_notes?: string | null;
+  style_notes?: string | null;
+  contact_number?: string | null;
+  preferred_address?: string | null;
+  lead_source?: string | null;
+  service_type?: string | null;
+  construction_start?: string | null;
+  family_size?: string | null;
+  occupation_hint?: string | null;
+  decision_maker?: string | null;
+  main_concern?: string | null;
+  lead_temperature?: string | null;
+  lost_reason?: string | null;
+  conversation_state?: string | null;
+  last_ai_reply_at?: string | null;
+  last_nudge_at?: string | null;
+  last_nudge_tier?: string | null;
 }
 
 export interface Message {
