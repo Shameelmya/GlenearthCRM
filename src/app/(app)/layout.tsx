@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/components/ui/Button';
-import { LayoutDashboard, Users, Settings, Columns3, Sprout } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Columns3, Sprout, LogOut } from 'lucide-react';
 import { useLeads } from '@/lib/hooks';
 import { getActions, isPaused } from '@/lib/crm';
 
@@ -19,6 +19,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: 'Pipeline', href: '/pipeline', icon: Columns3 },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
+  const logout = async () => {
+    try { await fetch('/api/logout', { method: 'POST' }); } catch {}
+    window.location.href = '/login';
+  };
   const active = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
 
   return (
@@ -39,6 +43,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
+        <button onClick={logout} className="mx-3 mb-4 flex items-center rounded-lg px-3 py-2.5 text-sm font-medium text-white/60 transition-colors hover:bg-white/8 hover:text-white">
+          <LogOut className="mr-3 h-[18px] w-[18px]" />Logout
+        </button>
       </aside>
 
       <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">{children}</main>
@@ -51,6 +58,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {item.badge ? <span className="absolute right-[28%] top-1.5 rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">{item.badge}</span> : null}
           </Link>
         ))}
+        <button onClick={logout} className="relative flex flex-1 flex-col items-center justify-center gap-0.5 text-gray-500">
+          <LogOut className="h-5 w-5" />
+          <span className="text-[10px] font-semibold">Logout</span>
+        </button>
       </nav>
     </div>
   );
