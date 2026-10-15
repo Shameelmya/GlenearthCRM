@@ -148,7 +148,7 @@ function Chat({ lead, phone }: { lead: Lead; phone: string }) {
   };
 
   return (
-    <div className="flex min-h-[480px] flex-1 flex-col overflow-hidden lg:min-h-0 rounded-xl border border-[var(--color-border)] bg-white">
+    <div className="flex min-h-[480px] min-w-0 flex-1 flex-col overflow-hidden lg:min-h-0 rounded-xl border border-[var(--color-border)] bg-white">
       <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-2.5">
         <h3 className="flex items-center gap-2 text-sm font-bold"><MessageSquare className="h-4 w-4" /> Conversation <span className="text-xs font-normal text-slate-400">{msgs.length} messages</span></h3>
         <div className="flex items-center gap-1">
@@ -255,9 +255,9 @@ export default function LeadDetailPage({ params }: { params: Promise<{ phone: st
         {(['chat', 'details'] as const).map((t) => <button key={t} onClick={() => setTab(t)} className={cn('flex-1 py-2.5 text-sm font-semibold capitalize', tab === t ? 'border-b-2 border-[var(--color-brand)] text-[var(--color-brand-dark)]' : 'text-slate-500')}>{t}</button>)}
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto lg:overflow-visible p-3 md:p-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto overflow-x-hidden lg:overflow-visible p-3 md:p-4 lg:grid-cols-[minmax(0,1fr)_380px]">
         {/* Left: next action + chat */}
-        <div className={cn('flex min-h-0 flex-col gap-3', tab !== 'chat' && 'hidden lg:flex')}>
+        <div className={cn('flex min-h-0 min-w-0 flex-col gap-3', tab !== 'chat' && 'hidden lg:flex')}>
           <section className="rounded-xl border-2 border-[var(--color-brand)]/30 bg-white p-3.5">
             <div className="flex flex-wrap items-center gap-2">
               <span className={cn('inline-flex rounded-md px-2 py-0.5 text-[11px] font-bold', toneCls[st.tone])}>NOW: {st.label}</span>
