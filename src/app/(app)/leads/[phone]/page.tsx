@@ -80,17 +80,30 @@ function FollowUpCard({ lead, save }: { lead: Lead; save: (u: Partial<Lead>) => 
 }
 
 /* ---------- chat ---------- */
-const TEMPLATES = [
-  { l: 'Ask start time', t: 'Sir, construction eppozhanu start cheyyan plan cheyyunnath? Athu ariyaal ningalkku ettavum nallath njan paranju tharam.' },
-  { l: 'Offer 2 options', t: 'Sir, njangalude oru ongoing site kaanan pattum, atho oru short call cheyyam. Ee aazhcha ethu divasam sukham aanu?' },
-  { l: 'Soft budget', t: 'Sir, ningal manassil oru budget range vechittundo? Athu anusarich design and finish suggest cheyyam.' },
-  { l: 'Share proof', t: 'Sir, ningalude concern pole thanne ulla oru project njan ayachu tharam. Nokki abhiprayam parayoo.' },
+type Lang = 'en' | 'mg' | 'ml';
+const LANGS: { k: Lang; l: string }[] = [{ k: 'mg', l: 'Manglish' }, { k: 'ml', l: 'മലയാളം' }, { k: 'en', l: 'English' }];
+const TEMPLATES: { l: string; en: string; mg: string; ml: string }[] = [
+  { l: 'Name', en: 'May I know your name, Sir?', mg: 'Sir, name enthaanu?', ml: 'സർ, പേര് എന്താ?' },
+  { l: 'Contact number', en: 'Could I have your mobile number, Sir? Our engineer will call you.', mg: 'Sir, oru contact number tharamo? Engineer vilikkan aanu.', ml: 'സർ, ഒരു കോൺടാക്ട് നമ്പർ തരാമോ? എൻജിനീയർ വിളിക്കാനാണ്.' },
+  { l: 'Start time', en: 'When are you planning to start construction, Sir?', mg: 'Construction eppozha start cheyyan plan, Sir?', ml: 'പണി എപ്പോഴാ തുടങ്ങാൻ പ്ലാൻ, സർ?' },
+  { l: 'Budget', en: 'What budget range do you have in mind, Sir?', mg: 'Budget ethra aanu Sir?', ml: 'ബഡ്ജറ്റ് എത്രയാ സർ?' },
+  { l: 'Site visit', en: 'When would you like the site visit, Sir? Saturday or Sunday?', mg: 'Site visit eppozha venda Sir? Saturday aano Sunday aano?', ml: 'സൈറ്റ് വിസിറ്റ് എപ്പോഴാ വേണ്ടത് സർ? ശനിയാഴ്ച ആണോ ഞായറാഴ്ച ആണോ?' },
+  { l: '2 options', en: 'You can visit one of our ongoing sites, or we can do a short call. Which day suits you, Sir?', mg: 'Ongoing site kaanam, allenkil oru short call. Ethu divasam sukham Sir?', ml: 'നടക്കുന്ന ഒരു സൈറ്റ് കാണാം, അല്ലെങ്കിൽ ഒരു ചെറിയ കോൾ. ഏത് ദിവസം സൗകര്യം സർ?' },
+  { l: 'Share proof', en: 'I will send you a similar project we did. Have a look, Sir.', mg: 'Ningalude pole ulla oru project ayakkam Sir, onnu nokku.', ml: 'നിങ്ങളുടെ പോലത്തെ ഒരു പ്രോജക്ട് അയക്കാം സർ, ഒന്ന് നോക്കൂ.' },
+  { l: 'Ok', en: 'Ok Sir \u{1F44D}', mg: 'Ok Sir \u{1F44D}', ml: 'ശരി സർ \u{1F44D}' },
 ];
+const ALLOWED_EMOJI = ['\u{1F44D}', '\u{1F60A}'];
+function cleanEmoji(t: string) {
+  let kept = 0;
+  return t.replace(/([\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}])[\u{1F3FB}-\u{1F3FF}\uFE0F]?/gu, (m, b) => (kept < 1 && ALLOWED_EMOJI.includes(b) ? (kept++, m) : ''));
+}
 
 function Chat({ lead, phone }: { lead: Lead; phone: string }) {
   const qc = useQueryClient();
   const { data, refetch } = useMessages(phone);
   const [text, setText] = useState('');
+  const pl = (lead.preferred_language || '').toLowerCase();
+  const [lang, setLang] = useState<Lang>(pl.includes('malayalam') && !pl.includes('mang') ? 'ml' : pl.includes('english') ? 'en' : 'mg');
   const endRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const msgs = useMemo(() => data?.messages || [], [data]);
@@ -104,7 +117,7 @@ function Chat({ lead, phone }: { lead: Lead; phone: string }) {
 
   const send = useMutation({
     mutationFn: async (m: string) => {
-      const res = await fetch(`/api/leads/${encodeURIComponent(phone)}/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel: lead.channel || 'telegram', message: m }) });
+      const res = await fetch(`/api/leads/${encodeURIComponent(phone)}/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel: lead.channel || 'telegram', message: cleanEmoji(m).trim() }) });
       const j = await res.json();
       if (!j.success) throw new Error(j.error || 'Failed to send');
     },
@@ -172,7 +185,9 @@ function Chat({ lead, phone }: { lead: Lead; phone: string }) {
 
       <div className="border-t border-[var(--color-border)] p-3">
         <div className="scrollbar-none mb-2 flex gap-1.5 overflow-x-auto">
-          {TEMPLATES.map((t) => <button key={t.l} onClick={() => setText(t.t)} className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-200">{t.l}</button>)}
+          {LANGS.map((g) => <button key={g.k} onClick={() => setLang(g.k)} className={cn('shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold', lang === g.k ? 'bg-[var(--color-brand)] text-white' : 'bg-white text-slate-500 ring-1 ring-slate-200')}>{g.l}</button>)}
+          {TEMPLATES.map((t) => <button key={t.l} onClick={() => setText(t[lang])} className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-200">{t.l}</button>)}
+          {['\u{1F44D}', '\u{1F60A}'].map((e) => <button key={e} type="button" onClick={() => setText((x) => cleanEmoji(x + e))} className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-sm hover:bg-slate-200">{e}</button>)}
         </div>
         <form onSubmit={(e) => { e.preventDefault(); if (text.trim()) send.mutate(text.trim()); }} className="flex items-end gap-2">
           <textarea id="composer" rows={2} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (text.trim() && !send.isPending) send.mutate(text.trim()); } }} placeholder="Type your reply. Enter to send, Shift+Enter for a new line" className="min-h-[44px] flex-1 resize-none rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--color-brand)]" />
